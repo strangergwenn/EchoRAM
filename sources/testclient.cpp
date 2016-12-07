@@ -48,6 +48,14 @@ int main(int argc, char** argv)
 	SendCommandReadResult(socket, query, reply);
 	std::cout << reply["reply"] << std::endl;
 
+	// Search
+	std::cout << "Search" << std::endl;
+	Json::Value search;
+	search["search"]["key"] = "name";
+	search["search"]["value"] = "Foobar";
+	SendCommandReadResult(socket, search, reply);
+	std::cout << reply["reply"] << std::endl;
+
 	// Disconnect
 	Json::Value disconnect;
 	disconnect["disconnect"]["privateId"] = privateId;

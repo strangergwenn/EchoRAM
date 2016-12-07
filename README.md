@@ -4,15 +4,16 @@ EchoRam is a lightweight matchmaking service for connecting players together, wi
 
 Features : 
 
- * RAM-only database system for storing player attributes (name, skill, current map, etc)
- * Basic update & query system
- * IPV4 TCP sockets
+ * RAM-only database for string attributes (level name, player name, player skill, etc)
+ * Attribute search (get player named foobar, etc)
+ * Simple update & query system
+ * Plain TCP sockets
  
 TODO : 
- * SSL sockets
- * Search
+ * Options parser for limits
  * Matchmaking
  * Garbage collection
+ * SSL sockets
 
 ## Command structure
 
@@ -124,6 +125,35 @@ The server reply will be sent as follow, mirroring the last heartbeat for this p
 			"name" : "Foobar",
 			"level" : "2"
 			// etc
+		}
+	}
+}
+```
+
+### Search
+
+Search for players by attribute key + value. 
+
+```
+{
+	"search" :
+	{
+		"key" : "name",
+		"value" : "Foobar"
+	}
+}
+```
+
+The server reply will be sent as follow, as a map of public identifier -> attribute value.
+
+```
+{
+	"reply" :
+	{
+		"status" : "OK",
+		"clients" : 
+		{
+			"<public-identifier>" : "Foobar",
 		}
 	}
 }

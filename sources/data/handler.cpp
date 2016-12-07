@@ -86,8 +86,9 @@ bool Handler::ProcessClientRequest(const std::string& dataIn, std::string& dataO
 				ClientData data;
 				for (std::string& key : request["heartbeat"]["data"].getMemberNames())
 				{
-					data.push_back(std::make_pair(key, request["heartbeat"]["data"].get(key, defValue).asString()));
+					data[key] = request["heartbeat"]["data"].get(key, defValue).asString();
 				}
+				data["clientAddress"] = mClientAddress;
 
 				mpDatabase->UpdateClient(privateId, data);
 			}
@@ -105,7 +106,7 @@ bool Handler::ProcessClientRequest(const std::string& dataIn, std::string& dataO
 			if (mpDatabase->IsConnectedPublic(targetId))
 			{
 				ClientData data = mpDatabase->QueryClient(targetId);
-				for (auto entry : data)
+				for (auto& entry : data)
 				{
 					reply["reply"]["data"][entry.first] = entry.second;
 				}
@@ -113,6 +114,19 @@ bool Handler::ProcessClientRequest(const std::string& dataIn, std::string& dataO
 			else
 			{
 				reply["reply"]["status"] = std::string("Target is not connected");
+			}
+		}
+
+		// Search clients
+		if (!request["search"].empty())
+		{
+			std::string key = request["search"]["key"].asString();
+			std::string value = request["search"]["value"].asString();
+
+			ClientSearchResult results = mpDatabase->SearchClients(key, value);
+			for (auto& result : results)
+			{
+				reply["reply"]["clients"][result.first] = result.second;
 			}
 		}
 	}

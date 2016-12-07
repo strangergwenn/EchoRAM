@@ -4,7 +4,8 @@
 #include <mutex>
 #include "json/json.h"
 
-using ClientData = std::vector<std::pair<std::string, std::string>>;
+using ClientData = std::map<std::string, std::string>;
+using ClientSearchResult = std::map<std::string, std::string>;
 
 
 /*-----------------------------------------------------------------------------
@@ -38,6 +39,9 @@ public:
 
 	// Get client data
 	const ClientData QueryClient(const std::string& publicId);
+
+	// List clients matching criteria
+	ClientSearchResult SearchClients(const std::string& key, const std::string& value, size_t maxCount = 10);
 
 
 private:

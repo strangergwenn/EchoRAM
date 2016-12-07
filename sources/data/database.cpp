@@ -84,3 +84,30 @@ const ClientData Database::QueryClient(const std::string& publicId)
 		return ClientData();
 	}
 }
+
+ClientSearchResult Database::SearchClients(const std::string& key, const std::string& value, size_t maxCount)
+{
+	std::lock_guard<std::mutex> lock(mMutex);
+
+	ClientSearchResult result;
+	size_t count = 0;
+
+	for (auto& client : mData)
+	{
+		// Look for value
+		ClientData& clientData = client.second;
+		if (clientData[key] == value)
+		{
+			result[client.first] = clientData[key];
+			count++;
+		}
+
+		// Limit
+		if (count >= maxCount)
+		{
+			break;
+		}
+	}
+
+	return result;
+}
