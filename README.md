@@ -7,10 +7,12 @@ Features :
  * RAM-only database system for storing player attributes (name, skill, current map, etc)
  * Basic update & query system
  * IPV4 TCP sockets
- * TODO : SSL sockets
- * TODO : search
- * TODO : matchmaking
- * TODO : garbage collection
+ 
+TODO : 
+ * SSL sockets
+ * Search
+ * Matchmaking
+ * Garbage collection
 
 ## Command structure
 
@@ -105,7 +107,7 @@ Queries fetch the player data from the public identifier.
 {
 	"query" :
 	{
-		"targetId" : ""<public-identifier>""
+		"targetId" : "<public-identifier>"
 	}
 }
 ```
