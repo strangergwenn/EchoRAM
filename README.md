@@ -1,4 +1,4 @@
-# EchoRam
+# EchoRAM
 
 EchoRam is a lightweight matchmaking service for connecting players together, without complex setup, database, or game-specific behaviour - just build and run. It's perfect for indie games with cooperative multiplayer.
 
@@ -13,9 +13,8 @@ Features
  
 TODO : 
 
- * Better search system
- * Matchmaking
  * Garbage collection of clients
+ * Matchmaking
  * SSL sockets, IPV6 support ?
 
 ## How to build

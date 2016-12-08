@@ -1,5 +1,6 @@
 #include "database.h"
 #include <iostream>
+#include <cassert>
 
 
 /*-----------------------------------------------------------------------------
@@ -58,6 +59,11 @@ void Database::UpdateClient(const std::string& privateId, const ClientData& data
 {
 	std::lock_guard<std::mutex> lock(mMutex);
 
+	for (auto& entry : data.attributes)
+	{
+		assert(entry.second.type != ClientAttributeType::T_NONE);
+	}
+
 	mData[mPrivateToPublic[privateId]] = data;
 }
 
@@ -68,27 +74,42 @@ const ClientData& Database::QueryClient(const std::string& publicId)
 	return mData[publicId];
 }
 
-ClientSearchResult Database::SearchClients(const std::string& key, const ClientAttribute& value, int maxCount)
+ClientSearchResult Database::SearchClients(const std::string& key, const ClientAttribute& value, SearchCriteriaType criteria, int maxCount)
 {
 	std::lock_guard<std::mutex> lock(mMutex);
-
 	ClientSearchResult result;
 	int count = 0;
 
 	for (auto& client : mData)
 	{
-		// Look for value
-		ClientData& clientData = client.second;
-		if (clientData.attributes[key] == value)
+		// Get client data
+		if (client.second.attributes.find(key) != client.second.attributes.end())
 		{
-			result[client.first] = clientData.attributes[key];
-			count++;
-		}
+			const ClientAttribute& attr = client.second.attributes[key];
 
-		// Limit
-		if (count >= maxCount)
-		{
-			break;
+			// Does it match ?
+			bool match = false;
+			switch (criteria)
+			{
+				case SearchCriteriaType::T_EQUAL:      match = (attr == value); break;
+				case SearchCriteriaType::T_LESSER:     match = (attr <  value); break;
+				case SearchCriteriaType::T_GREATER:    match = (attr >  value); break;
+				case SearchCriteriaType::T_LESSER_EQ:  match = (attr <= value); break;
+				case SearchCriteriaType::T_GREATER_EQ: match = (attr >= value); break;
+			}
+
+			// Result matches
+			if (match)
+			{
+				result[client.first] = client.second;
+				count++;
+			}
+
+			// Limit
+			if (count >= maxCount)
+			{
+				break;
+			}
 		}
 	}
 

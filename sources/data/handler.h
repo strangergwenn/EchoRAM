@@ -3,9 +3,9 @@
 #include <string>
 #include <memory>
 #include "json/json.h"
+#include "datatypes.h"
 
 class Database;
-class ClientAttribute;
 
 
 /*-----------------------------------------------------------------------------
@@ -31,6 +31,9 @@ private:
 
 	// Generate a safe public identifier from the private identifier that is never revealed
 	static std::string GetPublicIdFromPrivateId(const std::string privateId);
+
+	// Get a search criteria from string
+	static SearchCriteriaType GetCriteria(const std::string& v);
 
 	// Set a client attribute from a JSON value
 	static void SetClientAttribute(ClientAttribute& a, const Json::Value& v);

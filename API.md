@@ -96,7 +96,7 @@ Queries fetch the player data from the public identifier.
 }
 ```
 
-The server reply will be sent as follow, mirroring the last heartbeat for this player.
+The server reply will be sent as follow, mirroring the last heartbeat for this player, plus an additional field clientAddress featuring the client's IP.
 
 ```
 {
@@ -105,6 +105,7 @@ The server reply will be sent as follow, mirroring the last heartbeat for this p
 		"status" : "OK",
 		"data" : 
 		{
+			"clientAddress" : "127.0.0.1",
 			"name" : "Foobar",
 			"level" : "2"
 			// etc
@@ -133,11 +134,20 @@ The server reply will be sent as follow, as a map of public identifier -> attrib
 {
 	"reply" :
 	{
-		"status" : "OK",
-		"clients" : 
-		{
-			"<public-identifier>" : "Foobar",
-		}
+        "status" : "OK",
+        "clients" :
+        {
+			"<public-identifier>" : 
+			{
+				"clientAddress" : "127.0.0.1",
+				"name" : "Foobar",
+				"level" : "2"
+				// etc
+			}
+			,
+
+			// etc
+        }
 	}
 }
 ```

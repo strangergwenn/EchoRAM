@@ -3,7 +3,7 @@
 #include <string>
 #include <mutex>
 #include "json/json.h"
-#include "clientdata.h"
+#include "datatypes.h"
 
 
 /*-----------------------------------------------------------------------------
@@ -44,7 +44,7 @@ public:
 	const ClientData& QueryClient(const std::string& publicId);
 
 	// List clients matching criteria
-	ClientSearchResult SearchClients(const std::string& key, const ClientAttribute& value, int maxCount = 10);
+	ClientSearchResult SearchClients(const std::string& key, const ClientAttribute& value, SearchCriteriaType criteria, int maxCount = 10);
 
 
 private:

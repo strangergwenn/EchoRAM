@@ -60,11 +60,11 @@ bool Handler::ProcessClientRequest(const std::string& dataIn, std::string& dataO
 			}
 		}
 
-                // Server stats
-                if (!request["stats"].empty())
-                {
-                        reply["reply"]["count"] = mpDatabase->GetConnectedClientsCount();
-                }
+		// Server stats
+		if (!request["stats"].empty())
+		{
+			reply["reply"]["count"] = mpDatabase->GetConnectedClientsCount();
+		}
 
 		// Heartbeat request : write the new client data in the database
 		if (!request["heartbeat"].empty())
@@ -112,13 +112,18 @@ bool Handler::ProcessClientRequest(const std::string& dataIn, std::string& dataO
 		// Search clients
 		if (!request["search"].empty())
 		{
+			ClientAttribute value;
 			std::string key = request["search"]["key"].asString();
-			std::string value = request["search"]["value"].asString();
+			SetClientAttribute(value, request["search"]["value"]);
+			SearchCriteriaType criteria = GetCriteria(request["search"]["criteria"].asString());
 
-			ClientSearchResult results = mpDatabase->SearchClients(key, value);
-			for (auto& result : results)
+			ClientSearchResult results = mpDatabase->SearchClients(key, value, criteria);
+			for (auto& data : results)
 			{
-				SetJsonValue(reply["reply"]["clients"][result.first], result.second);
+				for (auto& entry : data.second.attributes)
+				{
+					SetJsonValue(reply["reply"]["clients"][data.first][entry.first], entry.second);
+				}
 			}
 		}
 	}
@@ -153,6 +158,20 @@ std::string Handler::GetPublicIdFromPrivateId(const std::string privateId)
 	}
 
 	return std::string(hashString);
+}
+
+SearchCriteriaType Handler::GetCriteria(const std::string& v)
+{
+	if (v == "<")
+		return SearchCriteriaType::T_LESSER;
+	else if (v == ">")
+		return SearchCriteriaType::T_GREATER;
+	else if (v == "<=")
+		return SearchCriteriaType::T_LESSER_EQ;
+	else if (v == ">=")
+		return SearchCriteriaType::T_GREATER_EQ;
+	else
+		return SearchCriteriaType::T_EQUAL;
 }
 
 void Handler::SetClientAttribute(ClientAttribute& a, const Json::Value& v)

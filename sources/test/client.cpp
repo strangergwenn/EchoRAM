@@ -69,8 +69,9 @@ void SimulateQueryClient(std::string url, int port, int identifier)
 	// Search
 	Json::Value search;
 	Json::Value reply;
-	search["search"]["key"] = "name";
-	search["search"]["value"] = "Foobar";
+	search["search"]["key"] = "level";
+	search["search"]["criteria"] = ">";
+	search["search"]["value"] = 30;
 	SendCommandReadResult(player.GetSocket(), search, reply);
 
 	// Print results
