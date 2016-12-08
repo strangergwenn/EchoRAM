@@ -1,8 +1,10 @@
 # EchoRam
 
-EchoRam is a lightweight matchmaking service for connecting players together, without complex setup, database, or game-specific behaviour. **Not ready for any kind of use yet**.
+EchoRam is a lightweight matchmaking service for connecting players together, without complex setup, database, or game-specific behaviour - just build and run. It's perfect for indie games with cooperative multiplayer.
 
-Features : 
+**Not ready for any kind of use yet**.
+
+Features
 
  * RAM-only database for string attributes (level name, player name, player skill, etc)
  * Attribute search (get player named foobar, etc)
@@ -10,151 +12,31 @@ Features :
  * Plain TCP sockets
  
 TODO : 
- * Options parser for limits
+
+ * Better search system
  * Matchmaking
- * Garbage collection
- * SSL sockets
+ * Garbage collection of clients
+ * SSL sockets, IPV6 support ?
 
-## Command structure
+## How to build
 
-EchoRam works with Json packets over TCP. 
+Dependencies
 
-### Connection
+ * OpenSSH
+ * CMake
 
-Connecting to the database makes the player searchable. The client needs access to something private and unique - a hash of the game key, Steam identifier, etc. This can change from one session to another, but doing so prevents any kind of friend system, for example.
+Windows build
 
-```
-{
-	"connect" :
-	{
-		"privateId" : "<identifier>"
-	}
-}
-```
+ * Open a terminal in the root folder
+ * 'Run Generate.bat'
+ * Open the 'EchoRam.sln' solution in build/Win64
+ * Switch build to 'Release'
+ * Start the build, the output will be named 'Server.exe' in the Release folder
+ 
+Linux build
 
-The server reply will be sent as follow.
-
-```
-{
-	"reply" :
-	{
-		"publicId" : "<public-identifier>"
-		"status" : "OK"
-	}
-}
-```
-
-The public identifier is what other players will use to query the database, for example to check their friend's only status.
-
-### Disconnection
-
-Disconnecting removes all data from the database. 
-
-```
-{
-	"disconnect" :
-	{
-		"privateId" : "<identifier>"
-	}
-}
-```
-
-The server reply will be sent as follow.
-
-```
-{
-	"reply" :
-	{
-		"status" : "OK"
-	}
-}
-```
-
-### Heartbeat
-
-Heartbeats are data commands writing new information about the player. This should be the entire player state, as it will overwrite the existing data entirely. You can send any JSON formatted data here.
-
-```
-{
-	"heartbeat" :
-	{
-		"privateId" : "<identifier>",
-		"data" :
-		{
-			"name" : "Foobar",
-			"level" : "2"
-			// etc
-		}
-	}
-}
-```
-
-The server reply will be sent as follow.
-
-```
-{
-	"reply" :
-	{
-		"status" : "OK"
-	}
-}
-```
-
-### Query
-
-Queries fetch the player data from the public identifier.
-
-```
-{
-	"query" :
-	{
-		"targetId" : "<public-identifier>"
-	}
-}
-```
-
-The server reply will be sent as follow, mirroring the last heartbeat for this player.
-
-```
-{
-	"reply" :
-	{
-		"status" : "OK",
-		"data" : 
-		{
-			"name" : "Foobar",
-			"level" : "2"
-			// etc
-		}
-	}
-}
-```
-
-### Search
-
-Search for players by attribute key + value. 
-
-```
-{
-	"search" :
-	{
-		"key" : "name",
-		"value" : "Foobar"
-	}
-}
-```
-
-The server reply will be sent as follow, as a map of public identifier -> attribute value.
-
-```
-{
-	"reply" :
-	{
-		"status" : "OK",
-		"clients" : 
-		{
-			"<public-identifier>" : "Foobar",
-		}
-	}
-}
-```
+ * Open a terminal in the root folder
+ * Run 'Generate.sh'
+ * Run 'cd build/Linux''
+ * Run 'make'
+ * The output will be named 'Server'
