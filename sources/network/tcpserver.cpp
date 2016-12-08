@@ -27,18 +27,18 @@ void TcpServer::Listen(uint16_t port, uint32_t nClients)
 	TcpSocket socket;
 	socket.Listen(port, nClients);
 
-	std::vector<std::thread> workers;
+	std::vector<std::thread> clients;
 	while (true)
 	{
 		TcpSocket client = socket.Accept();
-		workers.push_back(std::thread(workerProcess, pDatabase, client));
+		clients.push_back(std::thread(ProcessClient, pDatabase, client));
 	}
 
 	socket.Close();
 
-	for (auto& worker : workers)
+	for (auto& client : clients)
 	{
-		worker.join();
+		client.join();
 	}
 }
 
@@ -47,7 +47,7 @@ void TcpServer::Listen(uint16_t port, uint32_t nClients)
 	Callback
 -----------------------------------------------------------------------------*/
 
-void TcpServer::workerProcess(std::shared_ptr<Database> pDatabase, TcpSocket client)
+void TcpServer::ProcessClient(std::shared_ptr<Database> pDatabase, TcpSocket client)
 {
 	Handler handler(pDatabase, client.GetClientAddress());
 	bool keepConnection = true;

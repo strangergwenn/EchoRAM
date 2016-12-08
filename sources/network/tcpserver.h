@@ -26,7 +26,7 @@ public:
 
 private:
 
-	static void workerProcess(std::shared_ptr<Database> pDatabase, TcpSocket client);
+	static void ProcessClient(std::shared_ptr<Database> pDatabase, TcpSocket client);
 
 
 private:
