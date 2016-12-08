@@ -24,7 +24,7 @@ void SendCommandReadResult(TcpSocket& socket, const Json::Value& query, Json::Va
 
 	if (reply["reply"]["status"] != std::string("OK"))
 	{
-		std::cout << reply["reply"]["status"] << std::endl;
+		std::cout << "SendCommandReadResult failed : reply was " << reply["reply"]["status"] << std::endl;
 		assert(false);
 	}
 }

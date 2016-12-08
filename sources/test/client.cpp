@@ -18,7 +18,7 @@ void SimulateRandomClient(std::string url, int port, int identifier)
 	// Random
 	std::random_device rd;
 	std::mt19937 mt(rd());
-	std::uniform_int_distribution<int> randomTime(0, 10);
+	std::uniform_int_distribution<int> randomTime(0, 5);
 	std::uniform_int_distribution<int> randomHeartbeatCount(1, 3);
 
 	// Simulate connection
@@ -41,7 +41,7 @@ void SimulateQueryClient(std::string url, int port, int identifier)
 	// Random
 	std::random_device rd;
 	std::mt19937 mt(rd());
-	std::uniform_int_distribution<int> randomTime(0, 10);
+	std::uniform_int_distribution<int> randomTime(0, 2);
 
 	// Simulate connection
 	Player player(std::to_string(identifier), url, port);
