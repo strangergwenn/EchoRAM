@@ -5,6 +5,7 @@
 #include "json/json.h"
 
 class Database;
+class ClientAttribute;
 
 
 /*-----------------------------------------------------------------------------
@@ -19,13 +20,23 @@ public:
 
 	~Handler();
 
+
 public:
+
+	// Process data from a request and write a reply. Return true to keep connection.
+	bool ProcessClientRequest(const std::string& dataIn, std::string& dataOut);
+
+
+private:
 
 	// Generate a safe public identifier from the private identifier that is never revealed
 	static std::string GetPublicIdFromPrivateId(const std::string privateId);
 
-	// Process data from a request and write a reply. Return true to keep connection.
-	bool ProcessClientRequest(const std::string& dataIn, std::string& dataOut);
+	// Set a client attribute from a JSON value
+	static void SetClientAttribute(ClientAttribute& a, const Json::Value& v);
+
+	// Set a JSON value from a client attribute
+	static void SetJsonValue(Json::Value& v, const ClientAttribute& a);
 
 
 private:

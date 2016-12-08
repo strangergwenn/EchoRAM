@@ -23,20 +23,6 @@ Handler::~Handler()
 	Public interface
 -----------------------------------------------------------------------------*/
 
-std::string Handler::GetPublicIdFromPrivateId(const std::string privateId)
-{
-	uint8_t hash[SHA512_DIGEST_LENGTH];
-	SHA512((const unsigned char*)privateId.c_str(), privateId.length() - 1, hash);
-
-	char hashString[2 * SHA512_DIGEST_LENGTH + 1];
-	for (int i = 0; i < SHA512_DIGEST_LENGTH; i++)
-	{
-		snprintf(hashString + i * 2, 3, "%02x", hash[i]);
-	}
-
-	return std::string(hashString);
-}
-
 bool Handler::ProcessClientRequest(const std::string& dataIn, std::string& dataOut)
 {
 	Json::Value request;
@@ -74,6 +60,12 @@ bool Handler::ProcessClientRequest(const std::string& dataIn, std::string& dataO
 			}
 		}
 
+                // Server stats
+                if (!request["stats"].empty())
+                {
+                        reply["reply"]["count"] = mpDatabase->GetConnectedClientsCount();
+                }
+
 		// Heartbeat request : write the new client data in the database
 		if (!request["heartbeat"].empty())
 		{
@@ -86,9 +78,9 @@ bool Handler::ProcessClientRequest(const std::string& dataIn, std::string& dataO
 				ClientData data;
 				for (std::string& key : request["heartbeat"]["data"].getMemberNames())
 				{
-					data[key] = request["heartbeat"]["data"].get(key, defValue).asString();
+					SetClientAttribute(data.attributes[key], request["heartbeat"]["data"].get(key, defValue));
 				}
-				data["clientAddress"] = mClientAddress;
+				data.attributes["clientAddress"] = mClientAddress;
 
 				mpDatabase->UpdateClient(privateId, data);
 			}
@@ -105,10 +97,10 @@ bool Handler::ProcessClientRequest(const std::string& dataIn, std::string& dataO
 
 			if (mpDatabase->IsConnectedPublic(targetId))
 			{
-				ClientData data = mpDatabase->QueryClient(targetId);
-				for (auto& entry : data)
+				const ClientData& data = mpDatabase->QueryClient(targetId);
+				for (auto& entry : data.attributes)
 				{
-					reply["reply"]["data"][entry.first] = entry.second;
+					SetJsonValue(reply["reply"]["data"][entry.first], entry.second);
 				}
 			}
 			else
@@ -126,7 +118,7 @@ bool Handler::ProcessClientRequest(const std::string& dataIn, std::string& dataO
 			ClientSearchResult results = mpDatabase->SearchClients(key, value);
 			for (auto& result : results)
 			{
-				reply["reply"]["clients"][result.first] = result.second;
+				SetJsonValue(reply["reply"]["clients"][result.first], result.second);
 			}
 		}
 	}
@@ -144,3 +136,47 @@ bool Handler::ProcessClientRequest(const std::string& dataIn, std::string& dataO
 	return isSuccess;
 }
 
+
+/*-----------------------------------------------------------------------------
+	Private methods
+-----------------------------------------------------------------------------*/
+
+std::string Handler::GetPublicIdFromPrivateId(const std::string privateId)
+{
+	uint8_t hash[SHA512_DIGEST_LENGTH];
+	SHA512((const unsigned char*)privateId.c_str(), privateId.length(), hash);
+
+	char hashString[2 * SHA512_DIGEST_LENGTH + 1];
+	for (int i = 0; i < SHA512_DIGEST_LENGTH; i++)
+	{
+		snprintf(hashString + i * 2, 3, "%02x", hash[i]);
+	}
+
+	return std::string(hashString);
+}
+
+void Handler::SetClientAttribute(ClientAttribute& a, const Json::Value& v)
+{
+	if (v.isInt())
+		a = ClientAttribute(v.asInt());
+	else if (v.isUInt())
+		a = ClientAttribute(v.asUInt());
+	else if (v.isDouble())
+		a = ClientAttribute(v.asDouble());
+	else if (v.isBool())
+		a = ClientAttribute(v.asBool());
+	else
+		a = ClientAttribute(v.asString());
+}
+
+void Handler::SetJsonValue(Json::Value& v, const ClientAttribute& a)
+{
+	switch (a.type)
+	{
+		case ClientAttributeType::T_STR: v = a.s; break;
+		case ClientAttributeType::T_INT: v = a.i; break;
+		case ClientAttributeType::T_UNS: v = a.u; break;
+		case ClientAttributeType::T_DBL: v = a.d; break;
+		case ClientAttributeType::T_BOL: v = a.b; break;
+	}
+}

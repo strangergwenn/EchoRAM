@@ -1,4 +1,5 @@
 #include "database.h"
+#include <iostream>
 
 
 /*-----------------------------------------------------------------------------
@@ -21,7 +22,7 @@ Database::~Database()
 bool Database::IsConnectedPublic(const std::string& publicId)
 {
 	std::lock_guard<std::mutex> lock(mMutex);
-	
+
 	return (mData.find(publicId) != mData.end());
 }
 
@@ -32,73 +33,55 @@ bool Database::IsConnectedPrivate(const std::string& privateId)
 	return (mPrivateToPublic.find(privateId) != mPrivateToPublic.end());
 }
 
-bool Database::ConnectClient(const std::string& privateId, const std::string& publicId)
+int Database::GetConnectedClientsCount() const
+{
+	return static_cast<int>(mData.size());
+}
+
+void Database::ConnectClient(const std::string& privateId, const std::string& publicId)
 {
 	std::lock_guard<std::mutex> lock(mMutex);
 
 	mPrivateToPublic[privateId] = publicId;
-
-	mData[publicId] = ClientData();
-
-	return true;
+	mData[publicId] = ClientData(privateId);
 }
 
-bool Database::DisconnectClient(const std::string& privateId)
+void Database::DisconnectClient(const std::string& privateId)
 {
 	std::lock_guard<std::mutex> lock(mMutex);
 
-	if (mPrivateToPublic.find(privateId) != mPrivateToPublic.end())
-	{
-		std::string publicId = mPrivateToPublic[privateId];
-		mPrivateToPublic.erase(mPrivateToPublic.find(privateId));
-		mData.erase(mData.find(publicId));
-
-		return true;
-	}
-	else
-	{
-		return false;
-	}
+	mData.erase(mData.find(mPrivateToPublic[privateId]));
+	mPrivateToPublic.erase(mPrivateToPublic.find(privateId));
 }
 
-bool Database::UpdateClient(const std::string& privateId, const ClientData& data)
+void Database::UpdateClient(const std::string& privateId, const ClientData& data)
 {
 	std::lock_guard<std::mutex> lock(mMutex);
 
-	std::string publicId = mPrivateToPublic[privateId];
-	mData[publicId] = data;
-
-	return true;
+	mData[mPrivateToPublic[privateId]] = data;
 }
 
-const ClientData Database::QueryClient(const std::string& publicId)
+const ClientData& Database::QueryClient(const std::string& publicId)
 {
 	std::lock_guard<std::mutex> lock(mMutex);
 
-	if (mData.find(publicId) != mData.end())
-	{
-		return mData[publicId];
-	}
-	else
-	{
-		return ClientData();
-	}
+	return mData[publicId];
 }
 
-ClientSearchResult Database::SearchClients(const std::string& key, const std::string& value, size_t maxCount)
+ClientSearchResult Database::SearchClients(const std::string& key, const ClientAttribute& value, int maxCount)
 {
 	std::lock_guard<std::mutex> lock(mMutex);
 
 	ClientSearchResult result;
-	size_t count = 0;
+	int count = 0;
 
 	for (auto& client : mData)
 	{
 		// Look for value
 		ClientData& clientData = client.second;
-		if (clientData[key] == value)
+		if (clientData.attributes[key] == value)
 		{
-			result[client.first] = clientData[key];
+			result[client.first] = clientData.attributes[key];
 			count++;
 		}
 

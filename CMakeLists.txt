@@ -52,10 +52,11 @@ set (NETWORK_FILES
 
 # Data files
 set (DATA_FILES
-	sources/data/handler.h
-	sources/data/handler.cpp
+	sources/data/clientdata.h
 	sources/data/database.h
 	sources/data/database.cpp
+	sources/data/handler.h
+	sources/data/handler.cpp
 )
 
 # JSON files
@@ -68,6 +69,7 @@ set (JSON_FILES
 # Server files
 set (SERVER_FILES
 	sources/service.cpp
+	sources/inputparams.h
 )
 
 # Client files
