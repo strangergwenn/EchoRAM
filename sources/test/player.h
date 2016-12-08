@@ -1,27 +1,12 @@
+#pragma once
+
 #include "json/json.h"
+#include "utils.h"
 #include "network/tcpsocket.h"
-#include <iostream>
+
 #include <memory>
 #include <random>
 #include <cassert>
-#include <thread>
-
-
-void SendCommandReadResult(TcpSocket& socket, const Json::Value& query, Json::Value& reply)
-{
-	Json::Reader reader;
-	Json::StreamWriterBuilder builder;
-
-	// Write
-	std::string requestData = Json::writeString(builder, query);
-	socket.Write(requestData);
-
-	// Read reply
-	std::string replyData;
-	reply = Json::Value();
-	socket.Read(replyData);
-	reader.parse(replyData, reply);
-}
 
 
 class Player
@@ -30,41 +15,73 @@ public:
 
 	Player(std::string privateId, std::string url, int port)
 	{
-		// Property setup
 		mPrivateId = privateId;
+
 		std::random_device rd;
 		std::mt19937 mt(rd());
+
 		GeneratePlayerName(mt);
 		GeneratePlayerLevel(mt);
-		
-		// Network setup
-		Json::Value reply;
+
 		mSocket.Connect(url, port);
-
-		// Connect
-		Json::Value connect;
-		connect["connect"]["privateId"] = privateId;
-		SendCommandReadResult(mSocket, connect, reply);
-		mPublicId = reply["reply"]["publicId"].asString();
-		assert(reply["reply"]["status"] == std::string("OK"));
-
-		// Heartbeat
-		Json::Value heartbeat;
-		heartbeat["heartbeat"]["privateId"] = privateId;
-		heartbeat["heartbeat"]["data"]["name"] = mName;
-		heartbeat["heartbeat"]["data"]["level"] = std::to_string(mLevel);
-		SendCommandReadResult(mSocket, heartbeat, reply);
-		assert(reply["reply"]["status"] == std::string("OK"));
 	}
 
 	~Player()
 	{
-		// Disconnect
+		Disconnect();
+	}
+
+	void Connect()
+	{
+		Json::Value connect;
 		Json::Value reply;
+
+		connect["connect"]["privateId"] = mPrivateId;
+		SendCommandReadResult(mSocket, connect, reply);
+		mPublicId = reply["reply"]["publicId"].asString();
+	}
+
+	void Heartbeat()
+	{
+		Json::Value heartbeat;
+		Json::Value reply;
+
+		heartbeat["heartbeat"]["privateId"] = mPrivateId;
+		heartbeat["heartbeat"]["data"]["name"] = mName;
+		heartbeat["heartbeat"]["data"]["level"] = mLevel;
+		SendCommandReadResult(mSocket, heartbeat, reply);
+	}
+
+	std::pair<std::string, std::string> Query(std::string targetId)
+	{
+		Json::Value query;
+		Json::Value reply;
+
+		query["query"]["targetId"] = targetId;
+		SendCommandReadResult(mSocket, query, reply);
+
+		return std::make_pair<std::string, std::string>(
+			reply["reply"]["data"]["name"].asString(),
+			reply["reply"]["data"]["level"].asString());
+	}
+
+	void Disconnect()
+	{
 		Json::Value disconnect;
+		Json::Value reply;
+
 		disconnect["disconnect"]["privateId"] = mPrivateId;
 		SendCommandReadResult(mSocket, disconnect, reply);
-		assert(reply["reply"]["status"] == std::string("OK"));
+	}
+
+	std::string GetPublicId() const
+	{
+		return mPublicId;
+	}
+
+	TcpSocket& GetSocket()
+	{
+		return mSocket;
 	}
 
 
@@ -101,36 +118,3 @@ private:
 
 
 };
-
-
-int main(int argc, char** argv)
-{
-	Player player("123-456-789", "localhost", 1337);
-	
-	while (true)
-	{
-
-	}
-
-	// Query
-	/*std::cout << "Query 1" << std::endl;
-	Json::Value query;
-	query["query"]["targetId"] = publicId;
-	SendCommandReadResult(socket, query, reply);
-	std::cout << reply["reply"] << std::endl;*/
-
-	// Search
-	/*std::cout << "Search" << std::endl;
-	Json::Value search;
-	search["search"]["key"] = "name";
-	search["search"]["value"] = "Foobar";
-	SendCommandReadResult(socket, search, reply);
-	std::cout << reply["reply"] << std::endl;*/
-	
-	// Query
-	/*std::cout << "Query 2" << std::endl;
-	SendCommandReadResult(socket, query, reply);
-	std::cout << reply["reply"] << std::endl;*/
-
-	return EXIT_SUCCESS;
-}

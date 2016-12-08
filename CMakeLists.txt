@@ -1,5 +1,5 @@
 cmake_minimum_required (VERSION 3.0)
-project (EchoRam)
+project (EchoRAM)
 
 # Dependencies
 find_package(OpenSSL REQUIRED)
@@ -71,8 +71,10 @@ set (SERVER_FILES
 )
 
 # Client files
-set (CLIENT_FILES
-	sources/testclient.cpp
+set (TEST_FILES
+	sources/test/client.cpp
+	sources/test/player.h
+	sources/test/utils.h
 )
 
 # Organize solution
@@ -80,7 +82,7 @@ source_group("JSON" FILES ${JSON_FILES})
 source_group("Data" FILES ${DATA_FILES})
 source_group("Network" FILES ${NETWORK_FILES})
 source_group("Service" FILES ${SERVER_FILES})
-source_group("Client" FILES ${CLIENT_FILES})
+source_group("Test" FILES ${TEST_FILES})
 
 # Server
 set (SERVER_PROJECT_FILES
@@ -89,13 +91,13 @@ set (SERVER_PROJECT_FILES
 	${DATA_FILES}
 	${JSON_FILES}
 )
-setup_executable(Server "${SERVER_PROJECT_FILES}")
+setup_executable(EchoRAM "${SERVER_PROJECT_FILES}")
 
-# Client files
+# Test files
 set (CLIENT_PROJECT_FILES
-	${CLIENT_FILES}
+	${TEST_FILES}
 	${NETWORK_FILES}
 	${DATA_FILES}
 	${JSON_FILES}
 )
-setup_executable(TestClient "${CLIENT_PROJECT_FILES}")
+setup_executable(Test "${CLIENT_PROJECT_FILES}")
