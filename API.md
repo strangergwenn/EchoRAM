@@ -167,7 +167,8 @@ The server reply will be sent as follow, as a map of stattistics.
 	"reply" :
 	{
 		"status" : "OK",
-		"count" : 42
+		"count" : 42;
+		"uptime" : 1256
 	}
 }
 ```

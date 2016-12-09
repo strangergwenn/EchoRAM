@@ -3,9 +3,7 @@
 #include <string>
 #include <memory>
 #include "json/json.h"
-#include "datatypes.h"
-
-class Database;
+#include "database.h"
 
 
 /*-----------------------------------------------------------------------------

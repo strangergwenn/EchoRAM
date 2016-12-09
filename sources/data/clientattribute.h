@@ -10,9 +10,6 @@
 // Type of attribute
 enum class ClientAttributeType {T_NONE = 0, T_STR, T_INT, T_UNS, T_DBL, T_BOL};
 
-// Search criteria
-enum class SearchCriteriaType {T_EQUAL = 0, T_LESSER, T_GREATER, T_LESSER_EQ, T_GREATER_EQ};
-
 
 // Client attribute value
 class ClientAttribute
@@ -79,28 +76,3 @@ inline bool operator>  (const ClientAttribute& lhs, const ClientAttribute& rhs) 
 inline bool operator<= (const ClientAttribute& lhs, const ClientAttribute& rhs){	return !(rhs < lhs);}
 inline bool operator>= (const ClientAttribute& lhs, const ClientAttribute& rhs){	return !(lhs < rhs);}
 
-
-// Map of client attributes
-class ClientData
-{
-public:
-
-	ClientData()
-	{}
-
-	ClientData(const std::string& id, const std::string& addr)
-		: privateId(id)
-		, clientAddress(addr)
-	{}
-
-public:
-
-	std::string                              privateId;
-	std::string                              clientAddress;
-	std::map<std::string, ClientAttribute>   attributes;
-
-};
-
-
-// Search result for a value
-using ClientSearchResult = std::map<std::string, ClientData>;

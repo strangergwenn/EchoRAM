@@ -80,6 +80,18 @@ void SimulateQueryClient(std::string url, int port, int identifier)
 		std::cout << reply["reply"] << std::endl;
 	}
 
+	// Search
+	Json::Value stats;
+	reply = Json::Value();
+	stats["stats"]["key"] = 1;
+	SendCommandReadResult(player.GetSocket(), stats, reply);
+
+	// Print results
+	{
+		std::lock_guard<std::mutex> lock(sPrintMutex);
+		std::cout << reply["reply"] << std::endl;
+	}
+
 }
 
 

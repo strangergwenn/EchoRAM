@@ -1,5 +1,4 @@
 #include "handler.h"
-#include "database.h"
 #include <iostream>
 #include <openssl/sha.h>
 
@@ -64,6 +63,7 @@ bool Handler::ProcessClientRequest(const std::string& dataIn, std::string& dataO
 		if (!request["stats"].empty())
 		{
 			reply["reply"]["count"] = mpDatabase->GetConnectedClientsCount();
+			reply["reply"]["uptime"] = mpDatabase->GetUptime().count();
 		}
 
 		// Heartbeat request : write the new client data in the database

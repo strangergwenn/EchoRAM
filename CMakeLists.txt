@@ -52,7 +52,7 @@ set (NETWORK_FILES
 
 # Data files
 set (DATA_FILES
-	sources/data/datatypes.h
+	sources/data/clientattribute.h
 	sources/data/database.h
 	sources/data/database.cpp
 	sources/data/handler.h

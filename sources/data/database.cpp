@@ -9,6 +9,7 @@
 
 Database::Database()
 {
+	mStartupTime = std::chrono::high_resolution_clock::now();
 }
 
 Database::~Database()
@@ -39,6 +40,13 @@ int Database::GetConnectedClientsCount() const
 	return static_cast<int>(mData.size());
 }
 
+std::chrono::seconds Database::GetUptime() const
+{
+	auto now = std::chrono::high_resolution_clock::now();
+	auto diff = (now - mStartupTime);
+	return std::chrono::duration_cast<std::chrono::seconds>(diff);
+}
+
 void Database::ConnectClient(const std::string& privateId, const std::string& publicId, const std::string& clientAddress)
 {
 	std::lock_guard<std::mutex> lock(mMutex);
@@ -63,8 +71,8 @@ void Database::UpdateClient(const std::string& privateId, const ClientData& data
 	{
 		assert(entry.second.type != ClientAttributeType::T_NONE);
 	}
-
 	mData[mPrivateToPublic[privateId]] = data;
+	mData[mPrivateToPublic[privateId]].lastUpdateTime = std::chrono::high_resolution_clock::now();
 }
 
 const ClientData& Database::QueryClient(const std::string& publicId)
