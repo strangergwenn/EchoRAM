@@ -39,12 +39,12 @@ int Database::GetConnectedClientsCount() const
 	return static_cast<int>(mData.size());
 }
 
-void Database::ConnectClient(const std::string& privateId, const std::string& publicId)
+void Database::ConnectClient(const std::string& privateId, const std::string& publicId, const std::string& clientAddress)
 {
 	std::lock_guard<std::mutex> lock(mMutex);
 
 	mPrivateToPublic[privateId] = publicId;
-	mData[publicId] = ClientData(privateId);
+	mData[publicId] = ClientData(privateId, clientAddress);
 }
 
 void Database::DisconnectClient(const std::string& privateId)

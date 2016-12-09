@@ -31,7 +31,7 @@ public:
 
 
 	// Connect this client, adding the public + private IDs in database
-	void ConnectClient(const std::string& privateId, const std::string& publicId);
+	void ConnectClient(const std::string& privateId, const std::string& publicId, const std::string& clientAddress);
 
 	// Remove this client from database
 	void DisconnectClient(const std::string& privateId);

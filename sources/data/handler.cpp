@@ -40,7 +40,7 @@ bool Handler::ProcessClientRequest(const std::string& dataIn, std::string& dataO
 			std::string privateId = request["connect"]["privateId"].asString();
 			std::string publicId = GetPublicIdFromPrivateId(privateId);
 
-			mpDatabase->ConnectClient(privateId, publicId);
+			mpDatabase->ConnectClient(privateId, publicId, mClientAddress);
 
 			reply["reply"]["publicId"] = publicId;
 		}
@@ -73,14 +73,11 @@ bool Handler::ProcessClientRequest(const std::string& dataIn, std::string& dataO
 
 			if (mpDatabase->IsConnectedPrivate(privateId))
 			{
-				request["heartbeat"]["data"]["clientAddress"] = mClientAddress;
-
 				ClientData data;
 				for (std::string& key : request["heartbeat"]["data"].getMemberNames())
 				{
 					SetClientAttribute(data.attributes[key], request["heartbeat"]["data"].get(key, defValue));
 				}
-				data.attributes["clientAddress"] = mClientAddress;
 
 				mpDatabase->UpdateClient(privateId, data);
 			}

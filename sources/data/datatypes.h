@@ -88,13 +88,15 @@ public:
 	ClientData()
 	{}
 
-	ClientData(std::string id)
+	ClientData(const std::string& id, const std::string& addr)
 		: privateId(id)
+		, clientAddress(addr)
 	{}
 
 public:
 
 	std::string                              privateId;
+	std::string                              clientAddress;
 	std::map<std::string, ClientAttribute>   attributes;
 
 };
