@@ -23,7 +23,7 @@ public:
 	ClientAttribute(unsigned int v) : type(ClientAttributeType::T_UNS), u(v) {}
 	ClientAttribute(double       v) : type(ClientAttributeType::T_DBL), d(v) {}
 	ClientAttribute(bool         v) : type(ClientAttributeType::T_BOL), b(v) {}
-	
+
 
 public:
 
@@ -72,7 +72,8 @@ inline bool operator< (const ClientAttribute& lhs, const ClientAttribute& rhs)
 }
 
 // Trivial ClientAttribute operators
-inline bool operator>  (const ClientAttribute& lhs, const ClientAttribute& rhs) {	return rhs < lhs;}
-inline bool operator<= (const ClientAttribute& lhs, const ClientAttribute& rhs){	return !(rhs < lhs);}
-inline bool operator>= (const ClientAttribute& lhs, const ClientAttribute& rhs){	return !(lhs < rhs);}
+inline bool operator!= (const ClientAttribute& lhs, const ClientAttribute& rhs){ return !(rhs == lhs);}
+inline bool operator>  (const ClientAttribute& lhs, const ClientAttribute& rhs){ return   rhs <  lhs;}
+inline bool operator<= (const ClientAttribute& lhs, const ClientAttribute& rhs){ return !(rhs <  lhs);}
+inline bool operator>= (const ClientAttribute& lhs, const ClientAttribute& rhs){ return !(lhs <  rhs);}
 

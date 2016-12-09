@@ -31,7 +31,7 @@ private:
 	static std::string GetPublicIdFromPrivateId(const std::string privateId);
 
 	// Get a search criteria from string
-	static SearchCriteriaType GetCriteria(const std::string& v);
+	static ClientSearchCondition GetCondition(const std::string& v);
 
 	// Set a client attribute from a JSON value
 	static void SetClientAttribute(ClientAttribute& a, const Json::Value& v);

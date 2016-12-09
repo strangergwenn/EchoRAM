@@ -19,7 +19,7 @@ void SimulateRandomClient(std::string url, int port, int identifier)
 	std::random_device rd;
 	std::mt19937 mt(rd());
 	std::uniform_int_distribution<int> randomTime(0, 5);
-	std::uniform_int_distribution<int> randomHeartbeatCount(1, 3);
+	std::uniform_int_distribution<int> randomUpdateCount(1, 3);
 
 	// Simulate connection
 	Player player(std::to_string(identifier), url, port);
@@ -28,9 +28,9 @@ void SimulateRandomClient(std::string url, int port, int identifier)
 	std::this_thread::sleep_for(std::chrono::seconds(randomTime(mt)));
 
 	// Simulate lifetime
-	for (int i = 0; i < randomHeartbeatCount(mt); i++)
+	for (int i = 0; i < randomUpdateCount(mt); i++)
 	{
-		player.Heartbeat();
+		player.Update();
 		std::this_thread::sleep_for(std::chrono::seconds(randomTime(mt)));
 	}
 }
@@ -53,7 +53,7 @@ void SimulateQueryClient(std::string url, int port, int identifier)
 
 	// Simulate heartbeat
 	std::this_thread::sleep_for(std::chrono::seconds(randomTime(mt)));
-	player.Heartbeat();
+	player.Update();
 	{
 		std::lock_guard<std::mutex> lock(sPrintMutex);
 		std::cout << "Query client ready" << std::endl;
@@ -69,9 +69,12 @@ void SimulateQueryClient(std::string url, int port, int identifier)
 	// Search
 	Json::Value search;
 	Json::Value reply;
-	search["search"]["key"] = "level";
-	search["search"]["criteria"] = ">";
-	search["search"]["value"] = 30;
+	search["search"][0]["key"] = "level";
+	search["search"][0]["value"] = 30;
+	search["search"][0]["condition"] = ">";
+	search["search"][1]["key"] = "level";
+	search["search"][1]["value"] = 40;
+	search["search"][1]["condition"] = "<";
 	SendCommandReadResult(player.GetSocket(), search, reply);
 
 	// Print results

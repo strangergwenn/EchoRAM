@@ -13,8 +13,7 @@ Features
  
 TODO : 
 
- * Garbage collection of clients
- * Matchmaking
+ * Matchmaking API + algorithm
  * SSL sockets, IPV6 support ?
 
 ## How to build

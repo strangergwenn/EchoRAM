@@ -53,13 +53,13 @@ The server reply will be sent as follow.
 }
 ```
 
-## Heartbeat
+## Updates
 
-Heartbeats are data commands writing new information about the player. This should be the entire player state, as it will overwrite the existing data entirely. You can send any JSON formatted data here.
+Updates are data commands writing new information about the player. This should be the entire player state, as it will overwrite the existing data entirely. You can send any JSON formatted data here.
 
 ```
 {
-	"heartbeat" :
+	"update" :
 	{
 		"privateId" : "<identifier>",
 		"data" :
@@ -68,6 +68,30 @@ Heartbeats are data commands writing new information about the player. This shou
 			"level" : "2"
 			// etc
 		}
+	}
+}
+```
+
+The server reply will be sent as follow.
+
+```
+{
+	"reply" :
+	{
+		"status" : "OK"
+	}
+}
+```
+
+## Heartbeats
+
+Clients should send heartbeats regularly to ensure the data stays in the database, as it is garbage-collected periodically. The default server setting is 30s, so sending heartbeats every 10s is probably a good idea. Updates also work as heartbeats.
+
+```
+{
+	"heartbeat" :
+	{
+		"privateId" : "<identifier>"
 	}
 }
 ```
@@ -115,19 +139,27 @@ The server reply will be sent as follow, mirroring the last heartbeat for this p
 
 ## Player search
 
-Search for players by attribute key + value. 
+Search for connected clients. You can specifiy multiple search criteria. Every criterion is made of a key to check, a value to compare with and a condition to use. The requesting client can be returned as part of the results.
 
 ```
 {
 	"search" :
-	{
-		"key" : "name",
-		"value" : "Foobar"
-	}
+	[
+		{
+			"key" : "level",
+			"value" : 2,
+			"condition" : ">="
+		},
+		{
+			"key" : "level",
+			"value" : 10,
+			"condition" : "<"
+		}
+	]
 }
 ```
 
-The server reply will be sent as follow, as a map of public identifier -> attribute value.
+The server reply will be sent as follow, as a map of clients.
 
 ```
 {
@@ -160,7 +192,7 @@ Get stats on the server.
 }
 ```
 
-The server reply will be sent as follow, as a map of stattistics.
+The server reply will be sent as follow, as a map of statistics.
 
 ```
 {

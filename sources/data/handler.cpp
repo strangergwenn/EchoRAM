@@ -34,7 +34,7 @@ bool Handler::ProcessClientRequest(const std::string& dataIn, std::string& dataO
 		reply["reply"]["status"] = std::string("OK");
 
 		// Connection request : add / update entry in database
-		if (!request["connect"].empty())
+		if (!request["connect"].empty() && request["connect"]["privateId"].asString().length())
 		{
 			std::string privateId = request["connect"]["privateId"].asString();
 			std::string publicId = GetPublicIdFromPrivateId(privateId);
@@ -66,20 +66,35 @@ bool Handler::ProcessClientRequest(const std::string& dataIn, std::string& dataO
 			reply["reply"]["uptime"] = mpDatabase->GetUptime().count();
 		}
 
-		// Heartbeat request : write the new client data in the database
+		// Update request : write the new client data in the database
+		if (!request["update"].empty())
+		{
+			std::string privateId = request["update"]["privateId"].asString();
+
+			if (mpDatabase->IsConnectedPrivate(privateId))
+			{
+				ClientData data = mpDatabase->QueryClientPrivate(privateId);
+				for (std::string& key : request["update"]["data"].getMemberNames())
+				{
+					SetClientAttribute(data.attributes[key], request["update"]["data"].get(key, defValue));
+				}
+
+				mpDatabase->UpdateClient(privateId, data);
+			}
+			else
+			{
+				reply["reply"]["status"] = std::string("Target is not connected");
+			}
+		}
+
+		// Heartbeat request : mark client as active
 		if (!request["heartbeat"].empty())
 		{
 			std::string privateId = request["heartbeat"]["privateId"].asString();
 
 			if (mpDatabase->IsConnectedPrivate(privateId))
 			{
-				ClientData data;
-				for (std::string& key : request["heartbeat"]["data"].getMemberNames())
-				{
-					SetClientAttribute(data.attributes[key], request["heartbeat"]["data"].get(key, defValue));
-				}
-
-				mpDatabase->UpdateClient(privateId, data);
+				mpDatabase->HeartbeatClient(privateId);
 			}
 			else
 			{
@@ -94,7 +109,7 @@ bool Handler::ProcessClientRequest(const std::string& dataIn, std::string& dataO
 
 			if (mpDatabase->IsConnectedPublic(targetId))
 			{
-				const ClientData& data = mpDatabase->QueryClient(targetId);
+				const ClientData& data = mpDatabase->QueryClientPublic(targetId);
 				for (auto& entry : data.attributes)
 				{
 					SetJsonValue(reply["reply"]["data"][entry.first], entry.second);
@@ -107,14 +122,22 @@ bool Handler::ProcessClientRequest(const std::string& dataIn, std::string& dataO
 		}
 
 		// Search clients
-		if (!request["search"].empty())
+		if (!request["search"].empty() && request["search"].isArray())
 		{
-			ClientAttribute value;
-			std::string key = request["search"]["key"].asString();
-			SetClientAttribute(value, request["search"]["value"]);
-			SearchCriteriaType criteria = GetCriteria(request["search"]["criteria"].asString());
+			// Process the search parameters
+			std::vector<ClientSearchCriterion> criteria;
+			for (auto& searchCriterion : request["search"])
+			{
+				ClientAttribute value;
+				std::string key = searchCriterion["key"].asString();
+				SetClientAttribute(value, searchCriterion["value"]);
+				ClientSearchCondition type = GetCondition(searchCriterion["condition"].asString());
 
-			ClientSearchResult results = mpDatabase->SearchClients(key, value, criteria);
+				criteria.push_back(ClientSearchCriterion(key, value, type));
+			}
+
+			// Process results
+			ClientSearchResult results = mpDatabase->SearchClients(criteria);
 			for (auto& data : results)
 			{
 				for (auto& entry : data.second.attributes)
@@ -157,18 +180,18 @@ std::string Handler::GetPublicIdFromPrivateId(const std::string privateId)
 	return std::string(hashString);
 }
 
-SearchCriteriaType Handler::GetCriteria(const std::string& v)
+ClientSearchCondition Handler::GetCondition(const std::string& v)
 {
 	if (v == "<")
-		return SearchCriteriaType::T_LESSER;
+		return ClientSearchCondition::T_LESSER;
 	else if (v == ">")
-		return SearchCriteriaType::T_GREATER;
+		return ClientSearchCondition::T_GREATER;
 	else if (v == "<=")
-		return SearchCriteriaType::T_LESSER_EQ;
+		return ClientSearchCondition::T_LESSER_EQ;
 	else if (v == ">=")
-		return SearchCriteriaType::T_GREATER_EQ;
+		return ClientSearchCondition::T_GREATER_EQ;
 	else
-		return SearchCriteriaType::T_EQUAL;
+		return ClientSearchCondition::T_EQUAL;
 }
 
 void Handler::SetClientAttribute(ClientAttribute& a, const Json::Value& v)

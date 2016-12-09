@@ -6,28 +6,33 @@
 #include <iostream>
 
 
+void getOption(const InputParams& params, const std::string& key, const std::string& comment, int& value)
+{
+	if (params.isSet(key))
+	{
+		value = stoi(params.get(key));
+	}
+	std::cout << comment << " : " << value << std::endl;
+}
+
+
 int main(int argc, char** argv)
 {
-	InputParams params(argc, argv);
-
-	// Get port
+	// Default values
 	int port = 8080;
-	if (params.isSet("--port"))
-	{
-		port = stoi(params.get("--port"));
-	}
-	std::cout << "Listening on port " << port << std::endl;
-
-	// Get max clients
 	int clients = 1000;
-    if (params.isSet("--clients"))
-    {
-            clients = stoi(params.get("--clients"));
-    }
-	std::cout << "Accepting up to  " << clients << " clients" << std::endl;
+	int dbPeriod = 5;
+	int clientIdleTime = 30;
+
+	// Parse parameters
+	InputParams params(argc, argv);
+	getOption(params, "--port", "Listening on port", port);
+	getOption(params, "--clients", "Accepting clients", clients);
+	getOption(params, "--update-period", "Updating database every", dbPeriod);
+	getOption(params, "--client-idle-time", "Max client idle time", clientIdleTime);
 
 	// Server operation
-	std::shared_ptr<Database> pDatabase(new Database);
+	std::shared_ptr<Database> pDatabase(new Database(dbPeriod, clientIdleTime));
 	TcpServer server(pDatabase);
 	server.Listen(port, clients);
 

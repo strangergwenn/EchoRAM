@@ -41,14 +41,23 @@ public:
 		mPublicId = reply["reply"]["publicId"].asString();
 	}
 
+	void Update()
+	{
+		Json::Value update;
+		Json::Value reply;
+
+		update["update"]["privateId"] = mPrivateId;
+		update["update"]["data"]["name"] = mName;
+		update["update"]["data"]["level"] = mLevel;
+		SendCommandReadResult(mSocket, update, reply);
+	}
+
 	void Heartbeat()
 	{
 		Json::Value heartbeat;
 		Json::Value reply;
 
 		heartbeat["heartbeat"]["privateId"] = mPrivateId;
-		heartbeat["heartbeat"]["data"]["name"] = mName;
-		heartbeat["heartbeat"]["data"]["level"] = mLevel;
 		SendCommandReadResult(mSocket, heartbeat, reply);
 	}
 

@@ -20,12 +20,12 @@ public:
 
 public:
 
-	bool isSet(const std::string& param)
+	bool isSet(const std::string& param) const
 	{
 		return (std::find(mParams.begin(), mParams.end(), param) != mParams.end());
 	}
 
-	const std::string get(const std::string& param)
+	const std::string get(const std::string& param) const
 	{
 		auto paramKey = std::find(mParams.begin(), mParams.end(), param);
 		if (paramKey != mParams.end() && ++paramKey != mParams.end())

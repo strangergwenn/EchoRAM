@@ -7,13 +7,21 @@
 	Constructors & destructor
 -----------------------------------------------------------------------------*/
 
-Database::Database()
+Database::Database(int updatePeriod, int clientIdleTime)
 {
-	mStartupTime = std::chrono::high_resolution_clock::now();
+	mStartupTime = std::chrono::system_clock::now();
+	mUpdatePeriod = updatePeriod;
+	mClientIdleTime = clientIdleTime;
+	mRunning.store(true);
+
+	mThread = std::thread(&Database::BackgroundRefresh, this);
 }
 
 Database::~Database()
 {
+	mRunning.store(false);
+
+	mThread.join();
 }
 
 
@@ -42,7 +50,7 @@ int Database::GetConnectedClientsCount() const
 
 std::chrono::seconds Database::GetUptime() const
 {
-	auto now = std::chrono::high_resolution_clock::now();
+	DatabaseTime now = std::chrono::system_clock::now();
 	auto diff = (now - mStartupTime);
 	return std::chrono::duration_cast<std::chrono::seconds>(diff);
 }
@@ -53,6 +61,8 @@ void Database::ConnectClient(const std::string& privateId, const std::string& pu
 
 	mPrivateToPublic[privateId] = publicId;
 	mData[publicId] = ClientData(privateId, clientAddress);
+
+	assert(mData[publicId].privateId.length());
 }
 
 void Database::DisconnectClient(const std::string& privateId)
@@ -63,26 +73,36 @@ void Database::DisconnectClient(const std::string& privateId)
 	mPrivateToPublic.erase(mPrivateToPublic.find(privateId));
 }
 
+void Database::HeartbeatClient(const std::string& privateId)
+{
+	std::lock_guard<std::mutex> lock(mMutex);
+
+	mData[mPrivateToPublic[privateId]].lastUpdateTime = std::chrono::system_clock::now();
+}
+
 void Database::UpdateClient(const std::string& privateId, const ClientData& data)
 {
 	std::lock_guard<std::mutex> lock(mMutex);
 
-	for (auto& entry : data.attributes)
-	{
-		assert(entry.second.type != ClientAttributeType::T_NONE);
-	}
 	mData[mPrivateToPublic[privateId]] = data;
-	mData[mPrivateToPublic[privateId]].lastUpdateTime = std::chrono::high_resolution_clock::now();
+	mData[mPrivateToPublic[privateId]].lastUpdateTime = std::chrono::system_clock::now();
 }
 
-const ClientData& Database::QueryClient(const std::string& publicId)
+const ClientData& Database::QueryClientPublic(const std::string& publicId)
 {
 	std::lock_guard<std::mutex> lock(mMutex);
 
 	return mData[publicId];
 }
 
-ClientSearchResult Database::SearchClients(const std::string& key, const ClientAttribute& value, SearchCriteriaType criteria, int maxCount)
+const ClientData& Database::QueryClientPrivate(const std::string& privateId)
+{
+	std::lock_guard<std::mutex> lock(mMutex);
+
+	return mData[mPrivateToPublic[privateId]];
+}
+
+ClientSearchResult Database::SearchClients(const std::vector<ClientSearchCriterion>& criteria, int maxCount)
 {
 	std::lock_guard<std::mutex> lock(mMutex);
 	ClientSearchResult result;
@@ -90,36 +110,82 @@ ClientSearchResult Database::SearchClients(const std::string& key, const ClientA
 
 	for (auto& client : mData)
 	{
+		bool match = true;
+
 		// Get client data
-		if (client.second.attributes.find(key) != client.second.attributes.end())
+		for (auto& crit : criteria)
 		{
-			const ClientAttribute& attr = client.second.attributes[key];
-
-			// Does it match ?
-			bool match = false;
-			switch (criteria)
+			// Client doesn't have that attribute
+			if (client.second.attributes.find(crit.key) == client.second.attributes.end())
 			{
-				case SearchCriteriaType::T_EQUAL:      match = (attr == value); break;
-				case SearchCriteriaType::T_LESSER:     match = (attr <  value); break;
-				case SearchCriteriaType::T_GREATER:    match = (attr >  value); break;
-				case SearchCriteriaType::T_LESSER_EQ:  match = (attr <= value); break;
-				case SearchCriteriaType::T_GREATER_EQ: match = (attr >= value); break;
-			}
-
-			// Result matches
-			if (match)
-			{
-				result[client.first] = client.second;
-				count++;
-			}
-
-			// Limit
-			if (count >= maxCount)
-			{
+				match = false;
 				break;
 			}
+
+			// Client has attribute, check if it matches
+			else
+			{
+				const ClientAttribute& attr = client.second.attributes[crit.key];
+				switch (crit.condition)
+				{
+					case ClientSearchCondition::T_EQUAL:      match = match && (attr == crit.value); break;
+					case ClientSearchCondition::T_NEQUAL:     match = match && (attr != crit.value); break;
+					case ClientSearchCondition::T_LESSER:     match = match && (attr <  crit.value); break;
+					case ClientSearchCondition::T_GREATER:    match = match && (attr >  crit.value); break;
+					case ClientSearchCondition::T_LESSER_EQ:  match = match && (attr <= crit.value); break;
+					case ClientSearchCondition::T_GREATER_EQ: match = match && (attr >= crit.value); break;
+				}
+			}
+		}
+
+		// Result matches !
+		if (match)
+		{
+			result[client.first] = client.second;
+			count++;
+		}
+
+		// Limit
+		if (count >= maxCount)
+		{
+			break;
 		}
 	}
 
 	return result;
+}
+
+
+/*-----------------------------------------------------------------------------
+	Background process
+-----------------------------------------------------------------------------*/
+
+void Database::BackgroundRefresh()
+{
+	while (mRunning.load())
+	{
+		// Every second, update the database
+		std::this_thread::sleep_for(std::chrono::seconds(mUpdatePeriod));
+		std::lock_guard<std::mutex> lock(mMutex);
+		DatabaseTime now = std::chrono::system_clock::now();
+
+		// Detect idle clients
+		std::vector<std::string> idleClients;
+		for (auto& client : mData)
+		{
+			auto diff = (now - client.second.lastUpdateTime);
+			if (std::chrono::duration_cast<std::chrono::seconds>(diff).count() > mClientIdleTime)
+			{
+				idleClients.push_back(client.second.privateId);
+			}
+		}
+
+		// Disconnect idle clients
+		for (auto& privateId : idleClients)
+		{
+			mData.erase(mData.find(mPrivateToPublic[privateId]));
+			mPrivateToPublic.erase(mPrivateToPublic.find(privateId));
+		}
+
+	}
 }
