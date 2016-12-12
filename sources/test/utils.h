@@ -29,17 +29,3 @@ void SendCommandReadResult(TcpSocket& socket, const Json::Value& query, Json::Va
 	}
 }
 
-int GetClientsCount(const std::string& url, int port)
-{
-	TcpSocket socket;
-	socket.Connect(url, port);
-
-	Json::Value stats;
-	Json::Value reply;
-
-	stats["stats"] = 1;
-	SendCommandReadResult(socket, stats, reply);
-
-	return reply["reply"]["count"].asInt();
-}
-

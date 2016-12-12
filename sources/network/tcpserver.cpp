@@ -1,6 +1,7 @@
 #include "tcpserver.h"
 #include "data/handler.h"
 #include <thread>
+#include <iostream>
 #include <memory>
 
 
@@ -22,23 +23,36 @@ TcpServer::~TcpServer()
 	Public interface
 -----------------------------------------------------------------------------*/
 
-void TcpServer::Listen(uint16_t port, uint32_t nClients)
+void TcpServer::Listen(uint16_t port, uint32_t nClients, const std::string& certFile, const std::string& keyFile)
 {
 	TcpSocket socket;
-	socket.Listen(port, nClients);
 
-	std::vector<std::thread> clients;
-	while (true)
+	// Setup socket
+	if (certFile.length() > 0 && keyFile.length() > 0)
 	{
-		TcpSocket client = socket.Accept();
-		clients.push_back(std::thread(ProcessClient, pDatabase, client));
+		socket.SetSSLServer(certFile, keyFile);
 	}
 
-	socket.Close();
-
-	for (auto& client : clients)
+	// Try listening on socket
+	if (socket.Listen(port, nClients))
 	{
-		client.join();
+		// Accept clients, fork the socket as a thread
+		std::vector<std::thread> clients;
+		while (true)
+		{
+			TcpSocket client = socket.Accept();
+			if (client.IsValid())
+			{
+				clients.push_back(std::thread(ProcessClient, pDatabase, client));
+			}
+		}
+
+		// Terminate connections, wait for exit
+		socket.Close();
+		for (auto& client : clients)
+		{
+			client.join();
+		}
 	}
 }
 
@@ -61,6 +75,4 @@ void TcpServer::ProcessClient(std::shared_ptr<Database> pDatabase, TcpSocket cli
 		keepConnection &= client.Write(reply);
 
 	} while (keepConnection);
-
-	client.Close();
 }

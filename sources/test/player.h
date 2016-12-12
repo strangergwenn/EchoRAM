@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include "json/json.h"
 #include "utils.h"
@@ -14,7 +14,7 @@ class Player
 {
 public:
 
-	Player(std::string privateId, std::string url, int port)
+	Player(std::string privateId, std::string url, int port = 8080, const std::string& caCertFile = "")
 	{
 		mPrivateId = privateId;
 
@@ -23,6 +23,11 @@ public:
 
 		GeneratePlayerName(mt);
 		GeneratePlayerLevel(mt);
+
+		if (caCertFile.length())
+		{
+			mSocket.SetSSLClient(caCertFile.c_str());
+		}
 
 		mSocket.Connect(url, port);
 	}

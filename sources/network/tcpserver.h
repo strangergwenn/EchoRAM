@@ -21,7 +21,7 @@ public:
 
 
 	// Start listening on port with up to nClients clients
-	void Listen(uint16_t port, uint32_t nClients);
+	void Listen(uint16_t port, uint32_t nClients, const std::string& certFile = "", const std::string& keyFile = "");
 
 
 private:

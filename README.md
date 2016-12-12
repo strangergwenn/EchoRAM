@@ -9,12 +9,13 @@ Features
  * RAM-only database for string attributes (level name, player name, player skill, etc)
  * Attribute search (get player named foobar, etc)
  * Simple update & query system
- * Plain TCP sockets
+ * Can use plaintext TCP or SSL
  
 TODO : 
 
- * Matchmaking API + algorithm
- * SSL sockets, IPV6 support ?
+ * Matchmaking API & algorithm
+ * UTF8 support
+ * IPV6 support
 
 ## How to build
 
@@ -29,7 +30,7 @@ Windows build
  * 'Run Generate.bat'
  * Open the 'EchoRam.sln' solution in build/Win64
  * Switch build to 'Release'
- * Start the build, the output will be named 'Server.exe' in the Release folder
+ * Start the build, the output will be named 'EchoRAM.exe' in the Release folder
  
 Linux build
 
@@ -37,4 +38,16 @@ Linux build
  * Run 'Generate.sh'
  * Run 'cd build/Linux''
  * Run 'make'
- * The output will be named 'Server'
+ * The output will be named 'EchoRAM'
+
+## Command-line parameters
+
+The EchoRAM executable features the following command-line options.
+
+ * --port <n> : Listening on port n
+ * --clients <n> : Accepting n clients
+ * --update-period <n> : Updating database every n seconds
+ * --client-idle-time <n> : Clients will be autoremoved every n seconds without update or heartbeat
+ * --use-ssl <n> : Use SSL for encryption (0 or 1)
+ * --public-cert <f> : Public SSL certificate file
+ * --private-key <f> : Private SSL key file

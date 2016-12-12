@@ -2,6 +2,9 @@
 
 #include <string>
 #include <cstdint>
+#include <openssl/bio.h>
+#include <openssl/ssl.h>
+#include <openssl/err.h>
 
 
 /*-----------------------------------------------------------------------------
@@ -48,14 +51,26 @@ public:
 
 	TcpSocket();
 
-	TcpSocket(SOCKET socket, sockaddr_in clientInfo);
+private:
 
+	// This constructor is dedicated to forking the server socket when accepting a client
+	TcpSocket(SOCKET socket, sockaddr_in clientInfo, SSL* pSession = nullptr);
+
+public:
+
+	// Copy & assigment constructors
 	TcpSocket(const TcpSocket& o);
-
 	TcpSocket& operator=(const TcpSocket& o);
 
+	// Destructor
 	~TcpSocket();
 
+
+	// Setup this socket to work as a SSL server
+	bool SetSSLServer(const std::string& certFile, const std::string& keyFile);
+
+	// Setup this socket to work as a SSL client
+	bool SetSSLClient(const std::string& caCertFile = "");
 
 	// Connect to the server at url:port
 	bool Connect(std::string url, uint16_t port = 80);
@@ -66,17 +81,20 @@ public:
 	// Wait for connection, accept when it arrives
 	const TcpSocket Accept();
 
+	// is this socket OK ?
+	bool IsValid() const;
+
 	// Write data on the socket
 	bool Write(const std::string& data);
 
 	// Read data from the socket
 	bool Read(std::string& data);
 
-	// Terminate the connection
-	void Close();
-
 	// Get the IP address of the connected client
 	std::string GetClientAddress() const;
+
+	// Terminate the connection
+	void Close();
 
 
 private:
@@ -96,6 +114,9 @@ private:
 	int*                                         mRefCount;
 	SOCKET                                       mSocket;
 	sockaddr_in                                  mClientInfo;
+
+	SSL_CTX*                                     mSSLContext;
+	SSL*                                         mSSLSession;
 
 	static int                                   sSocketCount;
 	static addrinfo                              sConnectHints;
