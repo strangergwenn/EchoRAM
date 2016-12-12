@@ -1,6 +1,5 @@
 #include "handler.h"
 #include <iostream>
-#include <openssl/sha.h>
 
 
 /*-----------------------------------------------------------------------------
@@ -37,11 +36,9 @@ bool Handler::ProcessClientRequest(const std::string& dataIn, std::string& dataO
 		if (!request["connect"].empty() && request["connect"]["privateId"].asString().length())
 		{
 			std::string privateId = request["connect"]["privateId"].asString();
-			std::string publicId = GetPublicIdFromPrivateId(privateId);
+			std::string publicId = request["connect"]["publicId"].asString();
 
 			mpDatabase->ConnectClient(privateId, publicId, mClientAddress);
-
-			reply["reply"]["publicId"] = publicId;
 		}
 
 		// Connection request : add / update entry in database
@@ -165,20 +162,6 @@ bool Handler::ProcessClientRequest(const std::string& dataIn, std::string& dataO
 /*-----------------------------------------------------------------------------
 	Private methods
 -----------------------------------------------------------------------------*/
-
-std::string Handler::GetPublicIdFromPrivateId(const std::string privateId)
-{
-	uint8_t hash[SHA512_DIGEST_LENGTH];
-	SHA512((const unsigned char*)privateId.c_str(), privateId.length(), hash);
-
-	char hashString[2 * SHA512_DIGEST_LENGTH + 1];
-	for (int i = 0; i < SHA512_DIGEST_LENGTH; i++)
-	{
-		snprintf(hashString + i * 2, 3, "%02x", hash[i]);
-	}
-
-	return std::string(hashString);
-}
 
 ClientSearchCondition Handler::GetCondition(const std::string& v)
 {

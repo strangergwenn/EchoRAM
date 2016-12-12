@@ -4,13 +4,21 @@ EchoRam works with Json packets over TCP.
 
 ## Connection
 
-Connecting to the database makes the player searchable. The client needs access to something private and unique - a hash of the game key, Steam identifier, etc. This can change from one session to another, but doing so prevents any kind of friend system, for example.
+Connecting to the database makes the player searchable. Two identifiers are used : a public and private one. Both need to be globally unique and are up to the client. A typical combination would be :
+
+  - hashed Steam ID as public ID (so that other clients can query players from their own friend list)
+  - completely independent private ID (so that it can't be guessed)
+
+Generating a RSA key couple is also very good.
+
+An update request should follow-up quickly to fill the data, as connection makes the player searchable immediatly.
 
 ```
 {
 	"connect" :
 	{
-		"privateId" : "<identifier>"
+		"privateId" : "<public-identifier>",
+		"privateId" : "<private-identifier>"
 	}
 }
 ```
@@ -37,7 +45,7 @@ Disconnecting removes all data from the database.
 {
 	"disconnect" :
 	{
-		"privateId" : "<identifier>"
+		"privateId" : "<<private-identifier>"
 	}
 }
 ```
@@ -61,7 +69,7 @@ Updates are data commands writing new information about the player. This should 
 {
 	"update" :
 	{
-		"privateId" : "<identifier>",
+		"privateId" : "<<private-identifier>",
 		"data" :
 		{
 			"name" : "Foobar",
@@ -91,7 +99,7 @@ Clients should send heartbeats regularly to ensure the data stays in the databas
 {
 	"heartbeat" :
 	{
-		"privateId" : "<identifier>"
+		"privateId" : "<<private-identifier>"
 	}
 }
 ```

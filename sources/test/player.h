@@ -7,6 +7,7 @@
 #include <memory>
 #include <random>
 #include <cassert>
+#include <openssl/sha.h>
 
 
 class Player
@@ -37,6 +38,7 @@ public:
 		Json::Value reply;
 
 		connect["connect"]["privateId"] = mPrivateId;
+		connect["connect"]["publicId"] = GetPublicIdFromPrivateId(mPrivateId);
 		SendCommandReadResult(mSocket, connect, reply);
 		mPublicId = reply["reply"]["publicId"].asString();
 	}
@@ -114,6 +116,21 @@ private:
 		std::uniform_int_distribution<int> level(0, 50);
 
 		mLevel = level(mt);
+	}
+
+	// Get public ID as hash of private (not really a good idea in production)
+	std::string GetPublicIdFromPrivateId(const std::string privateId)
+	{
+		uint8_t hash[SHA512_DIGEST_LENGTH];
+		SHA512((const unsigned char*)privateId.c_str(), privateId.length(), hash);
+
+		char hashString[2 * SHA512_DIGEST_LENGTH + 1];
+		for (int i = 0; i < SHA512_DIGEST_LENGTH; i++)
+		{
+			snprintf(hashString + i * 2, 3, "%02x", hash[i]);
+		}
+
+		return std::string(hashString);
 	}
 
 
