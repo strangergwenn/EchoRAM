@@ -1,4 +1,4 @@
- # EchoRam API
+# EchoRAM API
 
 EchoRam works with Json packets over TCP. 
 
@@ -29,7 +29,6 @@ The server reply will be sent as follow.
 {
 	"reply" :
 	{
-		"publicId" : "<public-identifier>"
 		"status" : "OK"
 	}
 }
